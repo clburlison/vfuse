@@ -414,9 +414,13 @@ def populate_packer_template(path, template, os_rev):
         json.dump(d, f, indent=4, separators=(',', ': '))
     set_perms(template)
 
-def create_empty_dmg(size):
+def create_empty_dmg(size, netboot_tmp_dir=None):
     '''Create an empty dmg to be used in a netboot scenario'''
-    temp_dmg = os.path.join(tempfile.mkdtemp(), 'vfuse_tmp.dmg')
+
+    if not netboot_tmp_dir:
+        netboot_tmp_dir = tempfile.mkdtemp()
+
+    temp_dmg = os.path.join(netboot_tmp_dir, 'vfuse_tmp.dmg')
     converted_dmg = os.path.join(tempfile.mkdtemp(), 'vfuse_converted.dmg')
 
     print colored('Creating temporary DMG: %s' % temp_dmg, 'green')
@@ -521,6 +525,7 @@ def main():
     netboot = False
     netboot_hdsize = '40'
     netboot_osvers = get_osvers('/')
+    netboot_tmp_dir = None
 
     monitor_vm = False
     job_id = None
@@ -633,7 +638,9 @@ def main():
                 netboot_hdsize = str(d['netboot_hdsize'])
             if d.get('netboot_osvers'):
                 netboot_osvers = d['netboot_osvers']
-            source_dmg = create_empty_dmg(netboot_hdsize)
+            if d.get('netboot_tmp_dir'):
+                netboot_tmp_dir = d['netboot_tmp_dir']
+            source_dmg = create_empty_dmg(netboot_hdsize, netboot_tmp_dir)
             connection_type = 'bridged'
         elif d.get('source_dmg'):
             source_dmg = os.path.expanduser(d['source_dmg'])
